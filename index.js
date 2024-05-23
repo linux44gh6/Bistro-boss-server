@@ -13,7 +13,7 @@ app.get('/',async(req,res)=>{
 })
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.pnsxsk9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 
@@ -29,6 +29,7 @@ async function run() {
   try {
   const menuCollection=client.db('BistroBoss').collection('Menu')
   const cartCollection=client.db('BistroBoss').collection('Cart')
+  const userCollection=client.db('BistroBoss').collection('User')
     await client.connect();
   
     app.get('/menu',async(req,res)=>{
@@ -46,6 +47,30 @@ async function run() {
       const result=await cartCollection.find(query).toArray()
       res.send(result)
     })
+    app.delete('/carts/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id:new ObjectId(id)}
+      const result=await cartCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    app.post('/users',async(req,res)=>{
+      const user=req.body
+      //insert email if does't email
+      const query={email:user.email}
+      const existingUser=await userCollection.findOne(query)
+      if(existingUser){
+        return res.send('user already exist')
+      }
+      const result=await userCollection.insertOne(user)
+      res.send(result)
+    })
+
+    app.get('/users',async(req,res)=>{
+      const result=await userCollection.find().toArray()
+      res.send(result)
+    })
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
