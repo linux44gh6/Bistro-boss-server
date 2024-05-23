@@ -53,7 +53,7 @@ async function run() {
       const result=await cartCollection.deleteOne(query)
       res.send(result)
     })
-
+//user releted api
     app.post('/users',async(req,res)=>{
       const user=req.body
       //insert email if does't email
@@ -71,6 +71,25 @@ async function run() {
       res.send(result)
     })
 
+    app.delete('/users/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id:new ObjectId(id)}
+      const result=await userCollection.deleteOne(query)
+      res.send(result)
+    })
+    //create admin
+    app.patch('/users/admin/:id',async(req,res)=>{
+      const id=req.params.id
+      console.log(id);
+      const query={_id:new ObjectId(id)}
+      const updatedDoc={
+        $set:{
+          role:"admin"
+        }
+      }
+      const result=await userCollection.updateOne(query,updatedDoc)
+      res.send(result)
+    })
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
