@@ -9,7 +9,7 @@ require('dotenv').config()
 app.use(cors())
 app.use(express.json())
 const verifyToken=(req,res,next)=>{
-  console.log("inside verify token",req.headers.authorization);
+  // console.log("inside verify token",req.headers.authorization);
   if(!req.headers.authorization){
     return res.status(401).send('unAuthorized access')
   }
@@ -23,6 +23,8 @@ const verifyToken=(req,res,next)=>{
   })
   
 }
+//use middle ware for verify admin
+
 
 app.get('/',async(req,res)=>{
     res.send('bistro boss in running')
@@ -47,10 +49,34 @@ async function run() {
   const cartCollection=client.db('BistroBoss').collection('Cart')
   const userCollection=client.db('BistroBoss').collection('User')
     await client.connect();
-  
+    //using admin verify
+    const verifyAdmin=async(req,res,next)=>{
+      const email=req.decoded.email
+      const query={email:email}
+      const user=await userCollection.findOne(query)
+      const isAdmin=user?.role==="admin"
+      if(!isAdmin){
+        return res.status(403).send('access forbidden')
+      }
+      next()
+    }
+
     app.get('/menu',async(req,res)=>{
         const result=await menuCollection.find().toArray()
         res.send(result)
+    })
+    app.delete('/menu/:id',verifyToken,verifyAdmin,async(req,res)=>{
+      const id=req.params.id
+      console.log(id);
+      const query={_id:new ObjectId(id)}
+      const result=await menuCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    app.post('/menu',verifyToken,verifyAdmin,async(req,res)=>{
+      const item=req.body
+      const result=await menuCollection.insertOne(item)
+      res.send(result)
     })
     app.post('/carts',async(req,res)=>{
       const cartItem=req.body;
@@ -130,8 +156,9 @@ async function run() {
           admin=user?.role==="admin"
         }
         res.send({admin})
-
     })
+
+   
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
