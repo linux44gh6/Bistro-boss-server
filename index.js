@@ -72,7 +72,26 @@ async function run() {
       const result=await menuCollection.deleteOne(query)
       res.send(result)
     })
+ app.get('/menuFind/:id',async(req,res)=>{
+  const id=req.params.id
+  console.log(id);
+  const query={_id:new ObjectId(id)}
+  const result=await menuCollection.findOne(query)
+  res.send(result)
+ })
 
+ app.patch("/menuField/:id",async(req,res)=>{
+  const id=req.params.id
+  const item=req.body
+  const filter={_id:new ObjectId(id)}
+  const updatedDoc={
+    $set:{
+      ...item
+    }
+  }
+  const result=await menuCollection.updateOne(filter,updatedDoc)
+  res.send(result)
+ })
     app.post('/menu',verifyToken,verifyAdmin,async(req,res)=>{
       const item=req.body
       const result=await menuCollection.insertOne(item)
